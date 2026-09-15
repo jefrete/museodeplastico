@@ -1316,4 +1316,1217 @@ look.addEventListener(
 
 /* =========================================================
    BOTONES MOBILE
+========================================================= */
+
+func    font-size:11px;
+}
+
+#close{
+    position:absolute;
+    right:12px;
+    top:8px;
+    cursor:pointer;
+    color:#777;
+}
+
+#mobile{
+    position:fixed;
+    inset:0;
+    z-index:25;
+    pointer-events:none;
+    display:none;
+}
+
+.mobile-btn{
+    position:absolute;
+    width:55px;
+    height:55px;
+    border-radius:50%;
+    border:1px solid rgba(0,255,255,.35);
+    background:rgba(0,20,25,.65);
+    color:#00ffff;
+    font-size:22px;
+    pointer-events:auto;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:none;
+}
+
+#up{
+    left:75px;
+    bottom:145px;
+}
+
+#down{
+    left:75px;
+    bottom:25px;
+}
+
+#left{
+    left:15px;
+    bottom:85px;
+}
+
+#right{
+    left:135px;
+    bottom:85px;
+}
+
+#look{
+    position:absolute;
+    right:0;
+    top:0;
+    width:55%;
+    height:100%;
+    pointer-events:auto;
+    touch-action:none;
+}
+
+#instructions{
+    position:fixed;
+    right:20px;
+    top:20px;
+    z-index:20;
+    text-align:right;
+    color:#788;
+    font-size:10px;
+    line-height:1.6;
+    letter-spacing:1px;
+    pointer-events:none;
+}
+
+@media(max-width:700px){
+    #mobile{
+        display:block;
+    }
+
+    #instructions{
+        display:none;
+    }
+
+    #hud{
+        top:12px;
+        left:12px;
+    }
+
+    .logo{
+        font-size:15px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="hud">
+    <div class="logo">PLASTIC BRAIN</div>
+    <div class="subtitle">DIGITAL LABORATORY · 2026</div>
+</div>
+
+<div id="instructions">
+    WASD / FLECHAS<br>
+    MOUSE = MIRAR<br>
+    CLICK = EXPLORAR
+</div>
+
+<div id="crosshair"></div>
+
+<div id="info">
+    <div id="close">✕</div>
+    <h2 id="infoTitle"></h2>
+    <p id="infoText"></p>
+    <a id="infoLink" href="#" target="_blank">
+        ABRIR ARTEFACTO →
+    </a>
+</div>
+
+<div id="mobile">
+    <div id="look"></div>
+
+    <button class="mobile-btn" id="up">▲</button>
+    <button class="mobile-btn" id="down">▼</button>
+    <button class="mobile-btn" id="left">◀</button>
+    <button class="mobile-btn" id="right">▶</button>
+</div>
+
+<script type="module">
+
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
+
+/* =========================================================
+   ARTEFACTOS REALES DEL PLASTIC BRAIN
+========================================================= */
+
+const artifacts = [
+
+{
+    title:"ARMONÍA REDUNDANTE",
+    category:"MUSIC",
+    icon:"∿",
+    description:"Experimento de armonía, acordes y progresiones.",
+    url:"https://jefrete.github.io/plasticbrain/"
+},
+
+{
+    title:"MAPA ARMÓNICO",
+    category:"MUSIC",
+    icon:"🎹",
+    description:"Exploración visual de relaciones armónicas.",
+    url:"https://jefrete.github.io/plasticbrain/"
+},
+
+{
+    title:"GROUND CONTROL",
+    category:"MUSIC",
+    icon:"🎛",
+    description:"Laboratorio musical y experimental.",
+    url:"https://jefrete.github.io/plasticbrain/"
+},
+
+{
+    title:"TERE MIN",
+    category:"WEB",
+    icon:"✦",
+    description:"Experimento web interactivo.",
+    url:"https://jefrete.github.io/plasticbrain/"
+},
+
+{
+    title:"ARGENTINA DEPORTES",
+    category:"SPORTS",
+    icon:"⚽",
+    description:"Aplicación deportiva.",
+    url:"https://argentina-deportes.vercel.app/"
+},
+
+{
+    title:"PELÍCULAS",
+    category:"CINEMA",
+    icon:"🍿",
+    description:"Experimento cinematográfico.",
+    url:"https://jefrete.github.io/plasticbrain/"
+},
+
+{
+    title:"CARD PRESENTATION",
+    category:"WEB",
+    icon:"◈",
+    description:"Presentación web experimental.",
+    url:"https://jefrete.github.io/Card-Presentation/"
+},
+
+{
+    title:"INTRO JEF",
+    category:"LANDING",
+    icon:"🚀",
+    description:"Landing experimental de JEF TECH.",
+    url:"https://intro-jef-tech.vercel.app/"
+},
+
+{
+    title:"JEF TECH",
+    category:"TECH",
+    icon:"⚡",
+    description:"Servicios tecnológicos y laboratorio JEF TECH.",
+    url:"https://jef-tech.vercel.app/"
+},
+
+{
+    title:"SUR LINK",
+    category:"NETWORK",
+    icon:"📡",
+    description:"Proyecto relacionado con conectividad y redes.",
+    url:"https://sur-link-sma.vercel.app/"
+},
+
+{
+    title:"CPEM7 INFORMÁTICA",
+    category:"TECH",
+    icon:"💻",
+    description:"Proyecto informático.",
+    url:"https://jefrete.github.io/plasticbrain/"
+},
+
+{
+    title:"ZION TURNERO",
+    category:"WEB",
+    icon:"⏱",
+    description:"Sistema de turnos.",
+    url:"https://zion-turnero-smpf.vercel.app/"
+},
+
+{
+    title:"PATHOS TURNERO",
+    category:"WEB",
+    icon:"◌",
+    description:"Otro experimento de sistema de turnos.",
+    url:"https://turnero-pathos.vercel.app/"
+},
+
+{
+    title:"VIXION TV",
+    category:"MEDIA",
+    icon:"📺",
+    description:"Experimento relacionado con televisión y medios.",
+    url:"https://jefrete.github.io/plasticbrain/"
+},
+
+{
+    title:"SUPER MASIVO",
+    category:"EXPERIMENT",
+    icon:"☄",
+    description:"Experimento digital.",
+    url:"https://jefrete.github.io/plasticbrain/"
+},
+
+{
+    title:"COMPLETA LA SÍLABA",
+    category:"GAME",
+    icon:"🔤",
+    description:"Juego educativo de palabras.",
+    url:"https://jefrete.github.io/plasticbrain/"
+},
+
+{
+    title:"EMPAREJAR",
+    category:"GAME",
+    icon:"🧩",
+    description:"Juego de memoria y asociación.",
+    url:"https://jefrete.github.io/plasticbrain/"
+},
+
+{
+    title:"TETRIS LETRAS",
+    category:"GAME",
+    icon:"▦",
+    description:"Tetris experimental con letras.",
+    url:"https://jefrete.github.io/plasticbrain/"
+}
+
+];
+
+
+/* =========================================================
+   ESCENA
+========================================================= */
+
+const scene = new THREE.Scene();
+
+scene.background = new THREE.Color(0x020406);
+
+scene.fog = new THREE.FogExp2(
+    0x020609,
+    0.035
+);
+
+
+const camera = new THREE.PerspectiveCamera(
+    70,
+    innerWidth / innerHeight,
+    0.1,
+    200
+);
+
+camera.position.set(
+    0,
+    1.65,
+    16
+);
+
+
+const renderer = new THREE.WebGLRenderer({
+    antialias:true,
+    powerPreference:"high-performance"
+});
+
+renderer.setSize(
+    innerWidth,
+    innerHeight
+);
+
+renderer.setPixelRatio(
+    Math.min(devicePixelRatio, 1.2)
+);
+
+renderer.shadowMap.enabled = false;
+
+document.body.appendChild(
+    renderer.domElement
+);
+
+
+/* =========================================================
+   LUCES
+========================================================= */
+
+scene.add(
+    new THREE.HemisphereLight(
+        0x99ffff,
+        0x020304,
+        0.65
+    )
+);
+
+const cyanLight =
+new THREE.PointLight(
+    0x00ffff,
+    18,
+    40
+);
+
+cyanLight.position.set(
+    0,
+    5,
+    0
+);
+
+scene.add(cyanLight);
+
+
+const purpleLight =
+new THREE.PointLight(
+    0x7722ff,
+    14,
+    35
+);
+
+purpleLight.position.set(
+    0,
+    3,
+    -18
+);
+
+scene.add(purpleLight);
+
+
+/* =========================================================
+   PISO
+========================================================= */
+
+const floorMat =
+new THREE.MeshBasicMaterial({
+    color:0x05090c
+});
+
+const floor =
+new THREE.Mesh(
+    new THREE.PlaneGeometry(80,80),
+    floorMat
+);
+
+floor.rotation.x =
+-Math.PI / 2;
+
+scene.add(floor);
+
+
+/* GRID */
+
+const grid =
+new THREE.GridHelper(
+    80,
+    80,
+    0x005f66,
+    0x082126
+);
+
+grid.position.y = 0.01;
+
+scene.add(grid);
+
+
+/* =========================================================
+   PAREDES
+========================================================= */
+
+function wall(
+    x,
+    z,
+    width,
+    height,
+    rotation=0
+){
+
+    const mesh =
+    new THREE.Mesh(
+        new THREE.BoxGeometry(
+            width,
+            height,
+            0.35
+        ),
+        new THREE.MeshBasicMaterial({
+            color:0x070d11
+        })
+    );
+
+    mesh.position.set(
+        x,
+        height/2,
+        z
+    );
+
+    mesh.rotation.y =
+    rotation;
+
+    scene.add(mesh);
+
+    return mesh;
+}
+
+
+/* Museo rectangular */
+
+wall(0,-25,52,7,0);
+wall(0,25,52,7,0);
+
+wall(-26,0,50,7,Math.PI/2);
+wall(26,0,50,7,Math.PI/2);
+
+
+/* =========================================================
+   TITULOS DE SALA
+========================================================= */
+
+function textSprite(
+    text,
+    color="#00ffff",
+    size=48
+){
+
+    const canvas =
+    document.createElement("canvas");
+
+    canvas.width=1024;
+    canvas.height=256;
+
+    const ctx =
+    canvas.getContext("2d");
+
+    ctx.clearRect(
+        0,0,
+        canvas.width,
+        canvas.height
+    );
+
+    ctx.font =
+    `900 ${size}px Arial`;
+
+    ctx.textAlign="center";
+
+    ctx.fillStyle=color;
+
+    ctx.shadowColor=color;
+    ctx.shadowBlur=25;
+
+    ctx.fillText(
+        text,
+        512,
+        140
+    );
+
+    const texture =
+    new THREE.CanvasTexture(canvas);
+
+    texture.colorSpace =
+    THREE.SRGBColorSpace;
+
+    const material =
+    new THREE.SpriteMaterial({
+        map:texture,
+        transparent:true
+    });
+
+    const sprite =
+    new THREE.Sprite(material);
+
+    sprite.scale.set(
+        10,
+        2.5,
+        1
+    );
+
+    return sprite;
+}
+
+
+/* =========================================================
+   PANEL / OBRA DE MUSEO
+========================================================= */
+
+function createArtwork(
+    data,
+    x,
+    z,
+    rotation
+){
+
+    const group =
+    new THREE.Group();
+
+    group.position.set(
+        x,
+        3.1,
+        z
+    );
+
+    group.rotation.y =
+    rotation;
+
+    scene.add(group);
+
+
+    /* MARCO */
+
+    const frame =
+    new THREE.Mesh(
+        new THREE.BoxGeometry(
+            6.6,
+            4.5,
+            0.25
+        ),
+        new THREE.MeshBasicMaterial({
+            color:0x10191d
+        })
+    );
+
+    group.add(frame);
+
+
+    /* PANTALLA */
+
+    const screen =
+    new THREE.Mesh(
+        new THREE.BoxGeometry(
+            6.05,
+            3.95,
+            0.15
+        ),
+        new THREE.MeshBasicMaterial({
+            color:0x03171b
+        })
+    );
+
+    screen.position.z =
+    -0.18;
+
+    group.add(screen);
+
+
+    /* BORDE NEON */
+
+    const edges =
+    new THREE.LineSegments(
+        new THREE.EdgesGeometry(
+            new THREE.BoxGeometry(
+                6.2,
+                4.1,
+                0.2
+            )
+        ),
+        new THREE.LineBasicMaterial({
+            color:0x00ffff
+        })
+    );
+
+    edges.position.z =
+    -0.3;
+
+    group.add(edges);
+
+
+    /* MINI UI */
+
+    const uiCanvas =
+    document.createElement("canvas");
+
+    uiCanvas.width=900;
+    uiCanvas.height=600;
+
+    const ctx =
+    uiCanvas.getContext("2d");
+
+    ctx.fillStyle="#020708";
+    ctx.fillRect(
+        0,0,
+        900,600
+    );
+
+
+    /* browser bar */
+
+    ctx.fillStyle="#0d181c";
+    ctx.fillRect(
+        0,0,
+        900,70
+    );
+
+
+    ctx.fillStyle="#ff4d67";
+    ctx.beginPath();
+    ctx.arc(30,35,9,0,Math.PI*2);
+    ctx.fill();
+
+
+    ctx.fillStyle="#ffd166";
+    ctx.beginPath();
+    ctx.arc(58,35,9,0,Math.PI*2);
+    ctx.fill();
+
+
+    ctx.fillStyle="#00ffff";
+    ctx.beginPath();
+    ctx.arc(86,35,9,0,Math.PI*2);
+    ctx.fill();
+
+
+    /* titulo */
+
+    ctx.fillStyle="#00ffff";
+
+    ctx.font=
+    "900 42px Arial";
+
+    ctx.fillText(
+        data.icon+"  "+data.title,
+        45,
+        145
+    );
+
+
+    /* categoria */
+
+    ctx.fillStyle="#78898d";
+
+    ctx.font=
+    "bold 20px Arial";
+
+    ctx.fillText(
+        data.category+" / DIGITAL ARTIFACT",
+        48,
+        185
+    );
+
+
+    /* tarjetas */
+
+    for(let i=0;i<4;i++){
+
+        ctx.fillStyle =
+        i===0
+        ? "#07343a"
+        : "#0b1417";
+
+        ctx.fillRect(
+            45+i*205,
+            235,
+            175,
+            180
+        );
+
+        ctx.strokeStyle =
+        "#00ffff";
+
+        ctx.globalAlpha=.35;
+
+        ctx.strokeRect(
+            45+i*205,
+            235,
+            175,
+            180
+        );
+
+        ctx.globalAlpha=1;
+
+        ctx.fillStyle="#00ffff";
+
+        ctx.font="bold 24px Arial";
+
+        ctx.fillText(
+            data.icon,
+            65+i*205,
+            275
+        );
+    }
+
+
+    /* descripcion */
+
+    ctx.fillStyle="#9ab";
+
+    ctx.font=
+    "18px Arial";
+
+    ctx.fillText(
+        data.description,
+        48,
+        475
+    );
+
+
+    /* boton */
+
+    ctx.fillStyle="#00ffff";
+
+    ctx.fillRect(
+        48,
+        510,
+        190,
+        45
+    );
+
+    ctx.fillStyle="#001014";
+
+    ctx.font=
+    "bold 18px Arial";
+
+    ctx.fillText(
+        "EXPLORE →",
+        72,
+        540
+    );
+
+
+    const texture =
+    new THREE.CanvasTexture(
+        uiCanvas
+    );
+
+    texture.colorSpace =
+    THREE.SRGBColorSpace;
+
+
+    const artScreen =
+    new THREE.Mesh(
+        new THREE.PlaneGeometry(
+            5.8,
+            3.85
+        ),
+        new THREE.MeshBasicMaterial({
+            map:texture
+        })
+    );
+
+    artScreen.position.set(
+        0,
+        0,
+        -0.3
+    );
+
+    group.add(
+        artScreen
+    );
+
+
+    /* titulo exterior */
+
+    const title =
+    textSprite(
+        data.title,
+        "#00ffff",
+        42
+    );
+
+    title.position.set(
+        0,
+        -2.65,
+        0
+    );
+
+    title.scale.set(
+        6,
+        1.2,
+        1
+    );
+
+    group.add(title);
+
+
+    /* luz de la obra */
+
+    const light =
+    new THREE.PointLight(
+        0x00ffff,
+        2,
+        8
+    );
+
+    light.position.set(
+        0,
+        0,
+        1
+    );
+
+    group.add(light);
+
+
+    /* datos */
+
+    group.userData =
+    data;
+
+    return group;
+}
+
+
+/* =========================================================
+   DISTRIBUIR ARTEFACTOS
+========================================================= */
+
+const leftWall =
+artifacts.slice(0,9);
+
+const rightWall =
+artifacts.slice(9,18);
+
+
+/* pared izquierda */
+
+leftWall.forEach(
+    (data,i)=>{
+
+        const z =
+        -20 + i*5;
+
+        createArtwork(
+            data,
+            -25.55,
+            z,
+            Math.PI/2
+        );
+
+    }
+);
+
+
+/* pared derecha */
+
+rightWall.forEach(
+    (data,i)=>{
+
+        const z =
+        20 - i*5;
+
+        createArtwork(
+            data,
+            25.55,
+            z,
+            -Math.PI/2
+        );
+
+    }
+);
+
+
+/* =========================================================
+   CEREBRO CENTRAL
+========================================================= */
+
+const brainGroup =
+new THREE.Group();
+
+brainGroup.position.set(
+    0,
+    2.8,
+    0
+);
+
+scene.add(brainGroup);
+
+
+/* cerebro */
+
+const brainMat =
+new THREE.MeshBasicMaterial({
+    color:0x092a30,
+    wireframe:true
+});
+
+const brain =
+new THREE.Mesh(
+    new THREE.IcosahedronGeometry(
+        3,
+        3
+    ),
+    brainMat
+);
+
+brain.scale.set(
+    1.15,
+    0.9,
+    0.8
+);
+
+brainGroup.add(brain);
+
+
+/* núcleo */
+
+const core =
+new THREE.Mesh(
+    new THREE.SphereGeometry(
+        0.65,
+        16,
+        16
+    ),
+    new THREE.MeshBasicMaterial({
+        color:0x00ffff
+    })
+);
+
+brainGroup.add(core);
+
+
+/* anillos */
+
+for(
+    let i=0;
+    i<3;
+    i++
+){
+
+    const ring =
+    new THREE.Mesh(
+        new THREE.TorusGeometry(
+            4+i*.8,
+            .025,
+            8,
+            64
+        ),
+        new THREE.MeshBasicMaterial({
+            color:
+            i===1
+            ?0x7722ff
+            :0x00ffff
+        })
+    );
+
+    ring.rotation.x =
+    i*.7;
+
+    ring.rotation.z =
+    i*.4;
+
+    brainGroup.add(
+        ring
+    );
+}
+
+
+/* cartel */
+
+const museumTitle =
+textSprite(
+    "PLASTIC BRAIN",
+    "#ffffff",
+    70
+);
+
+museumTitle.position.set(
+    0,
+    7,
+    -3
+);
+
+museumTitle.scale.set(
+    10,
+    2.5,
+    1
+);
+
+scene.add(
+    museumTitle
+);
+
+
+/* =========================================================
+   MOVIMIENTO
+========================================================= */
+
+const keys = {
+    forward:false,
+    backward:false,
+    left:false,
+    right:false
+};
+
+let velocityX=0;
+let velocityZ=0;
+
+const acceleration=0.018;
+const friction=0.82;
+const maxSpeed=0.10;
+
+
+function keyDown(e){
+
+    if(
+        e.key==="w" ||
+        e.key==="ArrowUp"
+    )
+        keys.forward=true;
+
+    if(
+        e.key==="s" ||
+        e.key==="ArrowDown"
+    )
+        keys.backward=true;
+
+    if(
+        e.key==="a" ||
+        e.key==="ArrowLeft"
+    )
+        keys.left=true;
+
+    if(
+        e.key==="d" ||
+        e.key==="ArrowRight"
+    )
+        keys.right=true;
+}
+
+
+function keyUp(e){
+
+    if(
+        e.key==="w" ||
+        e.key==="ArrowUp"
+    )
+        keys.forward=false;
+
+    if(
+        e.key==="s" ||
+        e.key==="ArrowDown"
+    )
+        keys.backward=false;
+
+    if(
+        e.key==="a" ||
+        e.key==="ArrowLeft"
+    )
+        keys.left=false;
+
+    if(
+        e.key==="d" ||
+        e.key==="ArrowRight"
+    )
+        keys.right=false;
+}
+
+
+window.addEventListener(
+    "keydown",
+    keyDown
+);
+
+window.addEventListener(
+    "keyup",
+    keyUp
+);
+
+
+/* =========================================================
+   CÁMARA
+========================================================= */
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener(
+    "mousemove",
+    e=>{
+
+        if(
+            document.pointerLockElement ===
+            renderer.domElement
+        ){
+
+            yaw -= e.movementX*0.0025;
+
+            pitch -=
+            e.movementY*0.0025;
+
+            pitch =
+            Math.max(
+                -1.2,
+                Math.min(1.2,pitch)
+            );
+        }
+
+    }
+);
+
+
+renderer.domElement.addEventListener(
+    "click",
+    ()=>{
+
+        if(innerWidth>700){
+
+            renderer.domElement.requestPointerLock();
+
+        }
+
+        interact();
+
+    }
+);
+
+
+/* =========================================================
+   TOUCH LOOK
+========================================================= */
+
+const look =
+document.getElementById("look");
+
+let touchX=0;
+let touchY=0;
+
+look.addEventListener(
+    "touchstart",
+    e=>{
+
+        const t=e.touches[0];
+
+        touchX=t.clientX;
+        touchY=t.clientY;
+
+    },
+    {passive:true}
+);
+
+
+look.addEventListener(
+    "touchmove",
+    e=>{
+
+        const t=e.touches[0];
+
+        const dx=
+        t.clientX-touchX;
+
+        const dy=
+        t.clientY-touchY;
+
+        yaw -= dx*.004;
+        pitch -= dy*.004;
+
+        pitch=
+        Math.max(
+            -1.2,
+            Math.min(1.2,pitch)
+        );
+
+        touchX=t.clientX;
+        touchY=t.clientY;
+
+    },
+    {passive:true}
+);
+
+
+/* =========================================================
+   BOTONES MOBILE
 =====================================================
