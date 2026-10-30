@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Gran Museo Virtual Interactivo 3D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #08090d;
+      font-family: 'Outfit', -apple-system, sans-serif;
+      color: #f1f5f9;
+      touch-action: none;
+    }
+    #container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    .iframe-container {
+      width: 1024px;
+      height: 640px;
+      background: #0d0e12;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 35px rgba(0,0,0,0.9);
+      position: relative;
+    }
+    .iframe-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+    }
+    .project-header {
+      position: absolute;
+      top: -65px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      pointer-events: none;
+    }
+    .project-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 38px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 4px 14px rgba(0,0,0,0.95);
+      letter-spacing: 0.5px;
+    }
+    .project-badge {
+      font-size: 18px;
+      font-weight: 600;
+      text-shadow: 0 2px 8px black;
+      margin-top: 2px;
+    }
+    .iframe-overlay {
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+      background: transparent;
+      z-index: 5;
+    }
+
+    /* TOP BAR HUD */
+    #top-bar {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .hud-panel {
+      background: rgba(10, 12, 18, 0.85);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      border-radius: 12px;
+      padding: 8px 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      backdrop-filter: blur(10px);
+      pointer-events: auto;
+    }
+    .btn {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(71, 85, 105, 0.6);
+      color: #e2e8f0;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn:hover {
+      background: rgba(51, 65, 85, 0.9);
+      color: #fff;
+      border-color: #38bdf8;
+    }
+    .btn:active {
+      transform: scale(0.96);
+    }
+    .btn-primary {
+      background: #0ea5e9;
+      color: #030712;
+      border-color: #38bdf8;
+    }
+    .btn-primary:hover {
+      background: #38bdf8;
+      color: #000;
+    }
+
+    /* BOTTOM CONTROLS DOCK */
+    #bottom-dock {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 24px);
+      max-width: 740px;
+      z-index: 20;
+      pointer-events: auto;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #dock-content {
+      background: rgba(10, 12, 18, 0.92);
+      border: 1px solid rgba(51, 65, 85, 0.8);
+      border-radius: 16px;
+      padding: 10px 14px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    #dock-tab {
+      display: flex;
+      justify-content: center;
+      margin-bottom: -1px;
+    }
+    #dock-tab button {
+      background: rgba(10, 12, 18, 0.92);
+      border: 1px solid rgba(51, 65, 85, 0.8);
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      padding: 3px 12px;
+      font-size: 11px;
+      color: #94a3b8;
+      cursor: pointer;
+    }
+
+    /* MINI MAP */
+    #minimap-card {
+      position: absolute;
+      top: 60px;
+      right: 12px;
+      background: rgba(10, 12, 18, 0.94);
+      border: 1px solid rgba(51, 65, 85, 0.8);
+      border-radius: 12px;
+      padding: 10px;
+      z-index: 20;
+      pointer-events: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    #map-canvas {
+      display: block;
+      border-radius: 6px;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      cursor: crosshair;
+    }
+
+    /* NEAREST EXHIBIT CALLOUT */
+    #near-callout {
+      position: absolute;
+      top: 68px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10, 12, 18, 0.92);
+      border: 1px solid rgba(56, 189, 248, 0.5);
+      border-radius: 30px;
+      padding: 6px 16px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+      z-index: 20;
+      pointer-events: auto;
+      cursor: pointer;
+      animation: floatPulse 2s infinite ease-in-out;
+    }
+    @keyframes floatPulse {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-4px); }
+    }
+
+    /* VIRTUAL JOYSTICK (MOBILE) */
+    #joystick-zone {
+      position: absolute;
+      bottom: 90px;
+      left: 20px;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: rgba(10, 12, 18, 0.65);
+      border: 2px solid rgba(71, 85, 105, 0.6);
+      backdrop-filter: blur(8px);
+      z-index: 25;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+    }
+    #joystick-knob {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: #38bdf8;
+      border: 2px solid #fff;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+      position: absolute;
+      transition: transform 0.05s ease-out;
+      pointer-events: none;
+    }
+    #touch-look-zone {
+      position: absolute;
+      top: 60px;
+      right: 0;
+      bottom: 80px;
+      width: 50%;
+      z-index: 15;
+      display: none;
+      touch-action: none;
+    }
+
+    /* FULLSCREEN INSPECTION MODAL */
+    #modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #modal-box {
+      width: 100%;
+      max-width: 1100px;
+      height: 90vh;
+      background: #0f172a;
+      border: 1px solid rgba(71, 85, 105, 0.8);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-col;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+    }
+    #modal-header {
+      padding: 12px 18px;
+      background: #090d16;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #modal-frame-wrapper {
+      flex: 1;
+      background: #020617;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      overflow: hidden;
+    }
+    #modal-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 8px;
+      background: #000;
+    }
+
+    /* HELP MODAL */
+    #help-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 110;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #help-box {
+      width: 100%;
+      max-width: 500px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+<script src="/_aistudio-iframe.js?v=1f94f900"></script></head>
+<body>
+
+<div id="container"></div>
+
+<!-- TOP BAR -->
+<div id="top-bar">
+  <div class="hud-panel" style="display:flex; align-items:center; gap:10px;">
+    <div style="width:10px; height:10px; border-radius:50%; background:#38bdf8; box-shadow:0 0 8px #38bdf8;"></div>
+    <div>
+      <div style="font-weight:700; font-size:14px; font-family:'Space Grotesk',sans-serif;">Gran Museo Virtual 3D</div>
+      <div style="font-size:11px; color:#94a3b8;">15 Exhibiciones Web Interactivas</div>
+    </div>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:8px;">
+    <button class="btn" id="btn-sound" title="Alternar Sonido">🔊 Sonido</button>
+    <button class="btn" id="btn-help" title="Ver Controles">❓ Controles</button>
+    <button class="btn" id="btn-map" title="Mostrar/Ocultar Mapa">🗺️ Plano</button>
+  </div>
+</div>
+
+<!-- NEAREST EXHIBIT PROMPT -->
+<div id="near-callout">
+  <span id="near-dot" style="width:10px; height:10px; border-radius:50%; background:#38bdf8;"></span>
+  <span id="near-title" style="font-weight:700; font-size:13px;">Título de Obra</span>
+  <span style="font-size:11px; color:#cbd5e1; background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:12px;">Pulsa [E] o Toca para Explorar</span>
+</div>
+
+<!-- 2D MINI-MAP -->
+<div id="minimap-card">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:11px; font-weight:600; color:#cbd5e1;">
+    <span>PLANO DE SALA</span>
+    <span style="color:#38bdf8;">15 OBRAS</span>
+  </div>
+  <canvas id="map-canvas" width="160" height="160"></canvas>
+  <div style="text-align:center; font-size:10px; color:#94a3b8; margin-top:5px;">Haz clic en un punto para volar allí</div>
+</div>
+
+<!-- BOTTOM CONTROLS DOCK -->
+<div id="bottom-dock">
+  <div id="dock-tab">
+    <button id="btn-toggle-dock">▾ Modo Galería Zen</button>
+  </div>
+  <div id="dock-content">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button class="btn btn-primary" id="btn-tour">▶ Iniciar Tour Guiado</button>
+      <button class="btn" id="btn-prev" title="Obra Anterior">◀ Ant</button>
+      <span id="exhibit-counter" style="font-size:12px; font-family:monospace; padding:0 4px; color:#38bdf8;">1/15</span>
+      <button class="btn" id="btn-next" title="Siguiente Obra">Sig ▶</button>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button class="btn" id="btn-inspect">🔍 Inspeccionar</button>
+      <button class="btn" id="btn-fps" title="Modo Videojuego FPS">🎯 Fijar Mira FPS</button>
+      <button class="btn" id="btn-toggle-joystick" title="Mostrar/Ocultar Joystick">🕹️ Joystick</button>
+      <button class="btn" id="btn-direct-click" title="Clic directo en paredes">🖱️ Clic 3D: OFF</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE TOUCH CONTROLS -->
+<div id="joystick-zone">
+  <div id="joystick-knob"></div>
+</div>
+<div id="touch-look-zone"></div>
+
+<!-- FULLSCREEN INSPECT MODAL -->
+<div id="modal">
+  <div id="modal-box">
+    <div id="modal-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span id="modal-badge-dot" style="width:10px; height:10px; border-radius:50%; background:#38bdf8;"></span>
+        <h3 id="modal-title" style="margin:0; font-size:16px; font-family:'Space Grotesk',sans-serif;">Obra</h3>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="btn" id="modal-btn-reload">🔄 Recargar</button>
+        <a class="btn" id="modal-btn-external" href="#" target="_blank" rel="noopener">🌐 Abrir Web ↗</a>
+        <button class="btn" id="modal-btn-close" style="background:#ef4444; color:#fff; border-color:#f87171;">✕ Cerrar</button>
+      </div>
+    </div>
+    <div id="modal-frame-wrapper">
+      <iframe id="modal-frame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div id="help-modal">
+  <div id="help-box">
+    <h3 style="margin-top:0; font-family:'Space Grotesk',sans-serif; color:#38bdf8; font-size:18px;">🕹️ Cómo Moverse por el Museo</h3>
+    <div style="font-size:13px; line-height:1.6; color:#cbd5e1;">
+      <p><b>⌨️ Computadora / Teclado:</b><br>
+      • <b>W A S D</b> o <b>Flechas:</b> Caminar y desplazarse.<br>
+      • <b>Q / E:</b> Girar la cámara suavemente.<br>
+      • <b>Shift:</b> Correr más rápido.<br>
+      • <b>Ratón:</b> Haz clic y arrastra en la pantalla para mirar alrededor, o pulsa "Fijar Mira FPS".<br>
+      • <b>Tecla E:</b> Interactuar con la obra frente a ti.
+      </p>
+      <p><b>📱 Celulares / Pantallas Táctiles:</b><br>
+      • <b>Joystick Izquierdo:</b> Arrastra para caminar.<br>
+      • <b>Lado Derecho:</b> Desliza tu dedo en la pantalla para girar la mirada.<br>
+      • <b>Plano:</b> Toca cualquier obra en el mapa para volar directamente.
+      </p>
+      <p><b>🎮 Gamepad:</b><br>
+      • Stick izquierdo para moverte y stick derecho para mirar.
+      </p>
+    </div>
+    <button class="btn btn-primary" id="help-btn-close" style="width:100%; justify-content:center; padding:10px; margin-top:12px;">¡Entendido, volver a la Galería!</button>
+  </div>
+</div>
+
+<script type="module">
+  import * as THREE from 'three';
+  import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+
+  // ---------- 15 PROYECTOS COMPLETOS ----------
+  const PROJECTS = [
+    { t:'Tensiómetro Armónico',     u:'https://jefrete.github.io/tensiometro-armonico/',    c:'#38bdf8', cat:'Música & Sonido' },
+    { t:'Manada Abierta',           u:'https://jefrete.github.io/Manada-Abierta/',          c:'#4ade80', cat:'Comunidad' },
+    { t:'Nuevas Películas Buenas',  u:'https://jefrete.github.io/nuevas.peliculas.buenas/', c:'#f43f5e', cat:'Cine & Media' },
+    { t:'PlasticBrain',             u:'https://jefrete.github.io/plasticbrain/',            c:'#a855f7', cat:'Neurociencia' },
+    { t:'Argentina Deportes',       u:'https://argentina-deportes.vercel.app/',             c:'#0ea5e9', cat:'Deportes' },
+    { t:'Armonía Redundante',       u:'https://jefrete.github.io/armonia.redundante/',      c:'#eab308', cat:'Música' },
+    { t:'Mapa Armónico',            u:'https://jefrete.github.io/mapa-armonico/',           c:'#06b6d4', cat:'Música & Teoría' },
+    { t:'Teoría para Bobos',        u:'https://jefrete.github.io/teoria-for-bobos/',        c:'#fb923c', cat:'Educación' },
+    { t:'Music Ground Control',     u:'https://jefrete.github.io/music-ground-control/',    c:'#10b981', cat:'Sintetizador' },
+    { t:'Music X55',                u:'https://jefrete.github.io/music-x55/',               c:'#6366f1', cat:'Workstation' },
+    { t:'Web Industrial Matrix',    u:'https://jefrete.github.io/web-industrial-matrix-01/',c:'#22c55e', cat:'Cyberpunk' },
+    { t:'Web Landing 00',           u:'https://jefrete.github.io/web-landing-00/',          c:'#ec4899', cat:'Diseño UI' },
+    { t:'Zion Turnero',             u:'https://zion-turnero-smpf.vercel.app/',              c:'#8b5cf6', cat:'Gestión' },
+    { t:'Tere Min',                 u:'https://jefrete.github.io/tere-min/',                c:'#14b8a6', cat:'Theremin' },
+    { t:'Turnero Pathos',           u:'https://turnero-pathos.vercel.app/',                 c:'#f97316', cat:'Servicios' }
+  ];
+
+  // ---------- DIMENSIONES DEL MUSEO ----------
+  const R = 15; // Radio / distancia de paredes
+  const WALL_H = 6.2;
+  const STAND_DIST = 4.2;
+
+  // Calculamos las posiciones en las 4 paredes
+  const SLOTS = [
+    // Pared Norte
+    { x: -9, z: -R + 0.15, ry: 0, viewX: -9, viewZ: -R + STAND_DIST, lookX: -9, lookZ: -R },
+    { x: -3, z: -R + 0.15, ry: 0, viewX: -3, viewZ: -R + STAND_DIST, lookX: -3, lookZ: -R },
+    { x:  3, z: -R + 0.15, ry: 0, viewX:  3, viewZ: -R + STAND_DIST, lookX:  3, lookZ: -R },
+    { x:  9, z: -R + 0.15, ry: 0, viewX:  9, viewZ: -R + STAND_DIST, lookX:  9, lookZ: -R },
+
+    // Pared Este
+    { x: R - 0.15, z: -9, ry: -Math.PI/2, viewX: R - STAND_DIST, viewZ: -9, lookX: R, lookZ: -9 },
+    { x: R - 0.15, z: -3, ry: -Math.PI/2, viewX: R - STAND_DIST, viewZ: -3, lookX: R, lookZ: -3 },
+    { x: R - 0.15, z:  3, ry: -Math.PI/2, viewX: R - STAND_DIST, viewZ:  3, lookX: R, lookZ:  3 },
+    { x: R - 0.15, z:  9, ry: -Math.PI/2, viewX: R - STAND_DIST, viewZ:  9, lookX: R, lookZ:  9 },
+
+    // Pared Sur
+    { x:  9, z: R - 0.15, ry: Math.PI, viewX:  9, viewZ: R - STAND_DIST, lookX:  9, lookZ: R },
+    { x:  3, z: R - 0.15, ry: Math.PI, viewX:  3, viewZ: R - STAND_DIST, lookX:  3, lookZ: R },
+    { x: -3, z: R - 0.15, ry: Math.PI, viewX: -3, viewZ: R - STAND_DIST, lookX: -3, lookZ: R },
+    { x: -9, z: R - 0.15, ry: Math.PI, viewX: -9, viewZ: R - STAND_DIST, lookX: -9, lookZ: R },
+
+    // Pared Oeste
+    { x: -R + 0.15, z:  6, ry: Math.PI/2, viewX: -R + STAND_DIST, viewZ:  6, lookX: -R, lookZ:  6 },
+    { x: -R + 0.15, z:  0, ry: Math.PI/2, viewX: -R + STAND_DIST, viewZ:  0, lookX: -R, lookZ:  0 },
+    { x: -R + 0.15, z: -6, ry: Math.PI/2, viewX: -R + STAND_DIST, viewZ: -6, lookX: -R, lookZ: -6 }
+  ];
+
+  // ---------- WEB AUDIO PROCEDURAL (CERO 404s) ----------
+  let audioCtx = null;
+  let soundEnabled = true;
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+  function playChime(freq = 520) {
+    if (!soundEnabled) return;
+    initAudio();
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    g.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.65);
+  }
+  let lastStep = 0;
+  function playFootstep() {
+    if (!soundEnabled) return;
+    const now = performance.now();
+    if (now - lastStep < 300) return;
+    lastStep = now;
+    initAudio();
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(80 + Math.random() * 20, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(35, audioCtx.currentTime + 0.08);
+    g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.085);
+  }
+
+  // ---------- 1. CONFIGURACIÓN SCENE & CAMARA ----------
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x07080c);
+  scene.fog = new THREE.Fog(0x07080c, 16, 45);
+
+  const cssScene = new THREE.Scene();
+
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 150);
+  const EYE_Y = 1.7;
+  camera.position.set(0, EYE_Y, 9);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.domElement.style.position = 'absolute';
+  renderer.domElement.style.top = '0';
+  renderer.domElement.style.left = '0';
+  renderer.domElement.style.zIndex = '1';
+  document.getElementById('container').appendChild(renderer.domElement);
+
+  const cssRenderer = new CSS3DRenderer();
+  cssRenderer.setSize(window.innerWidth, window.innerHeight);
+  cssRenderer.domElement.style.position = 'absolute';
+  cssRenderer.domElement.style.top = '0';
+  cssRenderer.domElement.style.left = '0';
+  cssRenderer.domElement.style.zIndex = '2';
+  cssRenderer.domElement.style.pointerEvents = 'none'; // Por defecto los clics pasan a la navegación
+  document.getElementById('container').appendChild(cssRenderer.domElement);
+
+  // ---------- 2. CONSTRUCCIÓN DE LA ARQUITECTURA ----------
+  // Luces
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x1a1e28, 0.75));
+  const centerLight = new THREE.PointLight(0xffedd5, 30, 25);
+  centerLight.position.set(0, WALL_H - 0.5, 0);
+  scene.add(centerLight);
+
+  // Textura procedural para suelo de galería
+  function makeFloorTex() {
+    const cv = document.createElement('canvas');
+    cv.width = 512; cv.height = 512;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#161820';
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.strokeStyle = '#232733';
+    ctx.lineWidth = 4;
+    for (let i = 0; i < 512; i += 128) {
+      for (let j = 0; j < 512; j += 128) {
+        ctx.strokeRect(i, j, 128, 128);
+      }
+    }
+    const tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(8, 8);
+    return tex;
+  }
+
+  const matFloor = new THREE.MeshStandardMaterial({ map: makeFloorTex(), roughness: 0.4, metalness: 0.2 });
+  const matWall  = new THREE.MeshStandardMaterial({ color: 0xe5e1d8, roughness: 0.95 });
+  const matCeil  = new THREE.MeshStandardMaterial({ color: 0x11131a, roughness: 0.95 });
+  const matTrim  = new THREE.MeshStandardMaterial({ color: 0x0d0f14, roughness: 0.3, metalness: 0.8 });
+  const matBrass = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.9 });
+
+  // Suelo y Techo
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(R * 2, R * 2), matFloor);
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(R * 2, R * 2), matCeil);
+  ceil.rotation.x = Math.PI / 2;
+  ceil.position.y = WALL_H;
+  scene.add(ceil);
+
+  // Muros perimetrales
+  function addWall(x, z, ry) {
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(R * 2, WALL_H), matWall);
+    wall.position.set(x, WALL_H / 2, z);
+    wall.rotation.y = ry;
+    scene.add(wall);
+
+    // Zócalo
+    const trim = new THREE.Mesh(new THREE.BoxGeometry(R * 2, 0.3, 0.1), matTrim);
+    trim.position.set(x, 0.15, z);
+    trim.rotation.y = ry;
+    scene.add(trim);
+  }
+  addWall(0, -R, 0);
+  addWall(0,  R, Math.PI);
+  addWall( R, 0, -Math.PI / 2);
+  addWall(-R, 0,  Math.PI / 2);
+
+  // Escultura Central Kinética
+  const sculptureGroup = new THREE.Group();
+  const plinth = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, 0.7, 8), matTrim);
+  plinth.position.y = 0.35;
+  sculptureGroup.add(plinth);
+
+  const gyro = new THREE.Group();
+  gyro.position.y = 2.4;
+  const ring1 = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.04, 16, 48), matBrass);
+  const ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.03, 16, 48), matTrim);
+  ring2.rotation.x = Math.PI / 4;
+  const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.38), new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.2, metalness: 0.8 }));
+  gyro.add(ring1);
+  gyro.add(ring2);
+  gyro.add(core);
+  sculptureGroup.add(gyro);
+  scene.add(sculptureGroup);
+
+  // ---------- 3. MONTAJE DE LAS 15 WEBS ----------
+  const exhibitObjects = [];
+
+  PROJECTS.forEach((p, i) => {
+    const s = SLOTS[i];
+    
+    // A. Elemento HTML
+    const div = document.createElement('div');
+    div.className = 'iframe-container';
+    div.style.boxShadow = `0 0 35px ${p.c}44`;
+    div.style.pointerEvents = 'auto';
+
+    const header = document.createElement('div');
+    header.className = 'project-header';
+    header.style.pointerEvents = 'auto';
+    header.innerHTML = `
+      <div class="project-title">${p.t}</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:4px;">
+        <span class="project-badge" style="color:${p.c}">${p.cat} • #${i+1}</span>
+        <button id="focus-btn-${i}" style="background:rgba(15,23,42,0.9);color:#38bdf8;border:1px solid #0284c7;border-radius:6px;padding:3px 10px;font-size:14px;font-weight:600;cursor:pointer;">🎯 Pararse al Frente</button>
+        <button id="modal-btn-${i}" style="background:rgba(15,23,42,0.9);color:#f1f5f9;border:1px solid #475569;border-radius:6px;padding:3px 10px;font-size:14px;font-weight:600;cursor:pointer;">🔍 Pantalla Completa</button>
+      </div>
+    `;
+    div.appendChild(header);
+
+    const iframe = document.createElement('iframe');
+    iframe.src = p.u;
+    iframe.loading = "lazy";
+    iframe.title = p.t;
+    iframe.style.pointerEvents = 'auto';
+    div.appendChild(iframe);
+
+    // Overlay para clic de inspección (solo cuando Clic 3D se pausa)
+    const overlay = document.createElement('div');
+    overlay.className = 'iframe-overlay';
+    overlay.title = 'Haz clic para inspeccionar en pantalla completa';
+    overlay.style.display = 'none'; // Activo Clic 3D por defecto
+    overlay.onclick = (e) => {
+      e.stopPropagation();
+      openModal(i);
+    };
+    div.appendChild(overlay);
+
+    // Botones de acción en la cabecera 3D
+    setTimeout(() => {
+      const fb = div.querySelector(`#focus-btn-${i}`);
+      if (fb) fb.onclick = (e) => { e.stopPropagation(); teleportTo(i); };
+      const mb = div.querySelector(`#modal-btn-${i}`);
+      if (mb) mb.onclick = (e) => { e.stopPropagation(); openModal(i); };
+    }, 100);
+
+    // B. Objeto CSS3D
+    const cssObj = new CSS3DObject(div);
+    cssObj.scale.set(0.0035, 0.0035, 0.0035);
+    cssObj.position.set(s.x, 2.65, s.z);
+    cssObj.rotation.y = s.ry;
+    cssScene.add(cssObj);
+
+    // C. Marco WebGL en pared
+    let zOffset = 0, xOffset = 0;
+    if (s.ry === 0) zOffset = -0.06;
+    else if (s.ry === Math.PI) zOffset = 0.06;
+    else if (s.ry === Math.PI / 2) xOffset = -0.06;
+    else if (s.ry === -Math.PI / 2) xOffset = 0.06;
+
+    const frameMesh = new THREE.Mesh(new THREE.BoxGeometry(3.8, 2.45, 0.12), matTrim);
+    frameMesh.position.set(s.x + xOffset, 2.65, s.z + zOffset);
+    frameMesh.rotation.y = s.ry;
+    scene.add(frameMesh);
+
+    // Anillo luminoso en el suelo
+    const ringMesh = new THREE.Mesh(
+      new THREE.RingGeometry(0.85, 1.05, 32),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(p.c), side: THREE.DoubleSide, transparent: true, opacity: 0.25 })
+    );
+    ringMesh.rotation.x = -Math.PI / 2;
+    ringMesh.position.set(s.viewX, 0.02, s.viewZ);
+    scene.add(ringMesh);
+
+    // Reflector de galería
+    const spot = new THREE.SpotLight(0xfff3df, 20, 16, Math.PI / 4, 0.5);
+    spot.position.set(s.viewX, WALL_H - 0.5, s.viewZ);
+    spot.target.position.set(s.x, 2.6, s.z);
+    scene.add(spot);
+    scene.add(spot.target);
+
+    exhibitObjects.push({ project: p, slot: s, ringMesh, spot, overlay, iframe, index: i });
+  });
+
+  // ---------- 4. CINEMÁTICA Y CONTROLES (WASD, TÁCTIL, JOYSTICK) ----------
+  let camYaw = Math.PI;
+  let camPitch = 0;
+  const velocity = new THREE.Vector3();
+  const keys = { w: false, a: false, s: false, d: false, q: false, e: false, shift: false };
+  let moveSpeed = 4.2;
+
+  // Entrada de Joystick virtual (-1 a 1)
+  const joyInput = { forward: 0, strafe: 0 };
+
+  // Teclado
+  window.addEventListener('keydown', (e) => {
+    const k = e.code;
+    if (k === 'KeyW' || k === 'ArrowUp') keys.w = true;
+    if (k === 'KeyS' || k === 'ArrowDown') keys.s = true;
+    if (k === 'KeyA' || k === 'ArrowLeft') keys.a = true;
+    if (k === 'KeyD' || k === 'ArrowRight') keys.d = true;
+    if (k === 'KeyQ') keys.q = true;
+    if (k === 'KeyE') {
+      if (nearestIndex !== -1) openModal(nearestIndex);
+      else keys.e = true;
+    }
+    if (k === 'ShiftLeft' || k === 'ShiftRight') keys.shift = true;
+    if (k === 'Escape') closeModal();
+  });
+
+  window.addEventListener('keyup', (e) => {
+    const k = e.code;
+    if (k === 'KeyW' || k === 'ArrowUp') keys.w = false;
+    if (k === 'KeyS' || k === 'ArrowDown') keys.s = false;
+    if (k === 'KeyA' || k === 'ArrowLeft') keys.a = false;
+    if (k === 'KeyD' || k === 'ArrowRight') keys.d = false;
+    if (k === 'KeyQ') keys.q = false;
+    if (k === 'KeyE') keys.e = false;
+    if (k === 'ShiftLeft' || k === 'ShiftRight') keys.shift = false;
+  });
+
+  // Ratón: Arrastrar para mirar
+  let isMouseDown = false, lastMouseX = 0, lastMouseY = 0;
+  window.addEventListener('mousedown', (e) => {
+    if (e.target.closest('button, a, #modal, #help-modal, #minimap-card')) return;
+    isMouseDown = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (document.pointerLockElement === renderer.domElement) {
+      camYaw -= e.movementX * 0.0025;
+      camPitch -= e.movementY * 0.0025;
+      camPitch = Math.max(-1.3, Math.min(1.3, camPitch));
+      return;
+    }
+    if (!isMouseDown) return;
+    const dx = e.clientX - lastMouseX;
+    const dy = e.clientY - lastMouseY;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+    camYaw -= dx * 0.003;
+    camPitch -= dy * 0.003;
+    camPitch = Math.max(-1.3, Math.min(1.3, camPitch));
+  });
+  window.addEventListener('mouseup', () => { isMouseDown = false; });
+
+  // Dispositivos táctiles: Swipe en lado derecho para mirar
+  const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  const joystickZone = document.getElementById('joystick-zone');
+  const joystickKnob = document.getElementById('joystick-knob');
+  const touchLookZone = document.getElementById('touch-look-zone');
+
+  if (isTouchDevice) {
+    joystickZone.style.display = 'flex';
+    touchLookZone.style.display = 'block';
+  }
+
+  let joyTouchId = null;
+  let joyCenter = { x: 0, y: 0 };
+  const JOY_R = 40;
+
+  joystickZone.addEventListener('touchstart', (e) => {
+    const t = e.changedTouches[0];
+    joyTouchId = t.identifier;
+    const rect = joystickZone.getBoundingClientRect();
+    joyCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    handleJoy(t.clientX, t.clientY);
+  }, { passive: false });
+
+  window.addEventListener('touchmove', (e) => {
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      if (t.identifier === joyTouchId) {
+        handleJoy(t.clientX, t.clientY);
+      }
+    }
+  }, { passive: false });
+
+  function endJoy() {
+    joyTouchId = null;
+    joyInput.forward = 0;
+    joyInput.strafe = 0;
+    joystickKnob.style.transform = 'translate(0px, 0px)';
+  }
+  window.addEventListener('touchend', (e) => {
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === joyTouchId) endJoy();
+    }
+  });
+
+  function handleJoy(cx, cy) {
+    const dx = cx - joyCenter.x;
+    const dy = cy - joyCenter.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const clamped = Math.min(dist, JOY_R);
+    const ang = Math.atan2(dy, dx);
+    const kx = Math.cos(ang) * clamped;
+    const ky = Math.sin(ang) * clamped;
+    joystickKnob.style.transform = `translate(${kx}px, ${ky}px)`;
+    joyInput.forward = -ky / JOY_R;
+    joyInput.strafe = kx / JOY_R;
+  }
+
+  // Swipe en zona derecha para mirar
+  let lookTouchId = null;
+  let lastLookPos = { x: 0, y: 0 };
+
+  touchLookZone.addEventListener('touchstart', (e) => {
+    const t = e.changedTouches[0];
+    lookTouchId = t.identifier;
+    lastLookPos = { x: t.clientX, y: t.clientY };
+  });
+
+  touchLookZone.addEventListener('touchmove', (e) => {
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      if (t.identifier === lookTouchId) {
+        const dx = t.clientX - lastLookPos.x;
+        const dy = t.clientY - lastLookPos.y;
+        lastLookPos = { x: t.clientX, y: t.clientY };
+        camYaw -= dx * 0.005;
+        camPitch -= dy * 0.005;
+        camPitch = Math.max(-1.3, Math.min(1.3, camPitch));
+      }
+    }
+  });
+
+  touchLookZone.addEventListener('touchend', (e) => {
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === lookTouchId) lookTouchId = null;
+    }
+  });
+
+  // ---------- 5. TELETRANSPORTE Y VUELO SUAVE ----------
+  let isFlying = false;
+  let flyStartPos = new THREE.Vector3();
+  let flyEndPos = new THREE.Vector3();
+  let flyStartYaw = 0;
+  let flyEndYaw = 0;
+  let flyProgress = 0;
+
+  function teleportTo(idx) {
+    const s = SLOTS[idx];
+    isFlying = true;
+    flyProgress = 0;
+    flyStartPos.copy(camera.position);
+    flyEndPos.set(s.viewX, EYE_Y, s.viewZ);
+    flyStartYaw = camYaw;
+
+    const dx = s.lookX - s.viewX;
+    const dz = s.lookZ - s.viewZ;
+    flyEndYaw = Math.atan2(-dx, -dz);
+
+    currentExhibitIndex = idx;
+    updateCounter();
+    playChime(560);
+  }
+
+  // ---------- 6. TOUR GUIADO Y UI ----------
+  let currentExhibitIndex = 0;
+  let isTouring = false;
+  let tourTimer = null;
+  let nearestIndex = -1;
+
+  const btnTour = document.getElementById('btn-tour');
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  const btnInspect = document.getElementById('btn-inspect');
+  const btnFps = document.getElementById('btn-fps');
+  const btnSound = document.getElementById('btn-sound');
+  const btnHelp = document.getElementById('btn-help');
+  const btnMap = document.getElementById('btn-map');
+  const counterEl = document.getElementById('exhibit-counter');
+  const nearCallout = document.getElementById('near-callout');
+  const nearTitle = document.getElementById('near-title');
+  const nearDot = document.getElementById('near-dot');
+  const mapCanvas = document.getElementById('map-canvas');
+  const mapCtx = mapCanvas.getContext('2d');
+
+  function updateCounter() {
+    counterEl.textContent = `${currentExhibitIndex + 1}/15`;
+  }
+
+  btnTour.onclick = () => {
+    isTouring = !isTouring;
+    btnTour.textContent = isTouring ? '⏸ Pausar Tour' : '▶ Iniciar Tour Guiado';
+    if (isTouring) {
+      teleportTo(currentExhibitIndex);
+      tourTimer = setInterval(() => {
+        currentExhibitIndex = (currentExhibitIndex + 1) % PROJECTS.length;
+        teleportTo(currentExhibitIndex);
+      }, 12000);
+    } else {
+      clearInterval(tourTimer);
+    }
+  };
+
+  btnNext.onclick = () => {
+    currentExhibitIndex = (currentExhibitIndex + 1) % PROJECTS.length;
+    teleportTo(currentExhibitIndex);
+  };
+  btnPrev.onclick = () => {
+    currentExhibitIndex = (currentExhibitIndex - 1 + PROJECTS.length) % PROJECTS.length;
+    teleportTo(currentExhibitIndex);
+  };
+  btnInspect.onclick = () => {
+    openModal(currentExhibitIndex);
+  };
+  nearCallout.onclick = () => {
+    if (nearestIndex !== -1) openModal(nearestIndex);
+  };
+
+  btnFps.onclick = () => {
+    renderer.domElement.requestPointerLock();
+  };
+
+  btnSound.onclick = () => {
+    soundEnabled = !soundEnabled;
+    btnSound.textContent = soundEnabled ? '🔊 Sonido' : '🔇 Silencio';
+  };
+
+  // Clic Directo en Paredes 3D vs Navegación
+  let direct3D = true;
+  const btnDirect = document.getElementById('btn-direct-click');
+  btnDirect.textContent = '🖱️ Clic 3D: ON';
+  btnDirect.style.background = 'rgba(6, 182, 212, 0.2)';
+  btnDirect.style.borderColor = '#22d3ee';
+  btnDirect.onclick = () => {
+    direct3D = !direct3D;
+    btnDirect.textContent = direct3D ? '🖱️ Clic 3D: ON' : '🖱️ Clic 3D: OFF';
+    btnDirect.style.background = direct3D ? 'rgba(6, 182, 212, 0.2)' : 'rgba(30, 41, 59, 0.8)';
+    btnDirect.style.borderColor = direct3D ? '#22d3ee' : 'rgba(71, 85, 105, 0.6)';
+    exhibitObjects.forEach(ex => {
+      ex.overlay.style.display = direct3D ? 'none' : 'block';
+      ex.iframe.style.pointerEvents = direct3D ? 'auto' : 'none';
+    });
+  };
+
+  // Toggle Joystick Button
+  const btnToggleJoy = document.getElementById('btn-toggle-joystick');
+  btnToggleJoy.onclick = () => {
+    const show = joystickZone.style.display !== 'flex';
+    joystickZone.style.display = show ? 'flex' : 'none';
+    touchLookZone.style.display = show ? 'block' : 'none';
+  };
+
+  // Toggle MiniMap
+  const minimapCard = document.getElementById('minimap-card');
+  btnMap.onclick = () => {
+    minimapCard.style.display = minimapCard.style.display === 'none' ? 'block' : 'none';
+  };
+
+  // Toggle Dock
+  let dockCollapsed = false;
+  const btnToggleDock = document.getElementById('btn-toggle-dock');
+  const bottomDock = document.getElementById('bottom-dock');
+  btnToggleDock.onclick = () => {
+    dockCollapsed = !dockCollapsed;
+    document.getElementById('dock-content').style.display = dockCollapsed ? 'none' : 'flex';
+    btnToggleDock.textContent = dockCollapsed ? '▴ Mostrar Controles' : '▾ Modo Galería Zen';
+  };
+
+  // Modales
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalDot = document.getElementById('modal-badge-dot');
+  const modalFrame = document.getElementById('modal-frame');
+  const modalExternal = document.getElementById('modal-btn-external');
+
+  function openModal(idx) {
+    const p = PROJECTS[idx];
+    modalTitle.textContent = `${p.t} — ${p.cat}`;
+    modalDot.style.background = p.c;
+    modalFrame.src = p.u;
+    modalExternal.href = p.u;
+    modal.style.display = 'flex';
+    playChime(640);
+  }
+  function closeModal() {
+    modal.style.display = 'none';
+    modalFrame.src = '';
+  }
+  document.getElementById('modal-btn-close').onclick = closeModal;
+  document.getElementById('modal-btn-reload').onclick = () => {
+    const src = modalFrame.src;
+    modalFrame.src = '';
+    setTimeout(() => { modalFrame.src = src; }, 50);
+  };
+
+  // Help Modal
+  const helpModal = document.getElementById('help-modal');
+  btnHelp.onclick = () => { helpModal.style.display = 'flex'; };
+  document.getElementById('help-btn-close').onclick = () => { helpModal.style.display = 'none'; };
+
+  // ---------- 7. RENDERIZADO DEL MINI-MAPA ----------
+  function drawMiniMap() {
+    if (minimapCard.style.display === 'none') return;
+    const w = 160, h = 160;
+    mapCtx.fillStyle = '#0f172a';
+    mapCtx.fillRect(0, 0, w, h);
+
+    // Muros
+    const scale = (w - 24) / (R * 2.2);
+    const cx = w / 2, cy = h / 2;
+    mapCtx.strokeStyle = '#334155';
+    mapCtx.strokeRect(cx - R * scale, cy - R * scale, R * 2 * scale, R * 2 * scale);
+
+    // Escultura central
+    mapCtx.beginPath();
+    mapCtx.arc(cx, cy, 3, 0, Math.PI * 2);
+    mapCtx.fillStyle = '#d4af37';
+    mapCtx.fill();
+
+    // Puntos de exhibición
+    SLOTS.forEach((s, idx) => {
+      const px = cx + s.x * scale;
+      const py = cy + s.z * scale;
+      mapCtx.beginPath();
+      mapCtx.arc(px, py, idx === nearestIndex ? 4.5 : 3, 0, Math.PI * 2);
+      mapCtx.fillStyle = PROJECTS[idx].c;
+      mapCtx.fill();
+    });
+
+    // Visitante (punto y cono de visión)
+    const vx = cx + camera.position.x * scale;
+    const vy = cy + camera.position.z * scale;
+
+    mapCtx.save();
+    mapCtx.translate(vx, vy);
+    mapCtx.rotate(camYaw + Math.PI);
+    mapCtx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+    mapCtx.beginPath();
+    mapCtx.moveTo(0, 0);
+    mapCtx.lineTo(-10, -18);
+    mapCtx.lineTo(10, -18);
+    mapCtx.closePath();
+    mapCtx.fill();
+    mapCtx.restore();
+
+    mapCtx.beginPath();
+    mapCtx.arc(vx, vy, 3.5, 0, Math.PI * 2);
+    mapCtx.fillStyle = '#38bdf8';
+    mapCtx.fill();
+    mapCtx.strokeStyle = '#ffffff';
+    mapCtx.lineWidth = 1.5;
+    mapCtx.stroke();
+  }
+
+  // Clic en mini-mapa para volar
+  mapCanvas.onclick = (e) => {
+    const rect = mapCanvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const scale = (160 - 24) / (R * 2.2);
+    const cx = 80, cy = 80;
+
+    let closest = 0, minDist = 999;
+    SLOTS.forEach((s, idx) => {
+      const px = cx + s.x * scale;
+      const py = cy + s.z * scale;
+      const d = Math.hypot(mx - px, my - py);
+      if (d < minDist) { minDist = d; closest = idx; }
+    });
+    teleportTo(closest);
+  };
+
+  // ---------- 8. BUCLE DE ANIMACIÓN Y FÍSICA ----------
+  const _fwd = new THREE.Vector3();
+  const _side = new THREE.Vector3();
+  const _move = new THREE.Vector3();
+  const _euler = new THREE.Euler(0, 0, 0, 'YXZ');
+
+  let lastTime = performance.now();
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const now = performance.now();
+    const delta = Math.min((now - lastTime) / 1000, 0.1);
+    lastTime = now;
+
+    // Rotación de escultura
+    gyro.rotation.y += delta * 0.4;
+    ring1.rotation.x += delta * 0.3;
+
+    // Soporte Gamepad
+    const gps = navigator.getGamepads ? navigator.getGamepads() : [];
+    if (gps && gps[0]) {
+      const gp = gps[0];
+      const dead = 0.15;
+      const lx = Math.abs(gp.axes[0]) > dead ? gp.axes[0] : 0;
+      const ly = Math.abs(gp.axes[1]) > dead ? gp.axes[1] : 0;
+      const rx = Math.abs(gp.axes[2]) > dead ? gp.axes[2] : 0;
+      const ry = Math.abs(gp.axes[3]) > dead ? gp.axes[3] : 0;
+
+      camYaw -= rx * delta * 2.4;
+      camPitch -= ry * delta * 1.8;
+      camPitch = Math.max(-1.3, Math.min(1.3, camPitch));
+
+      joyInput.forward = -ly;
+      joyInput.strafe = lx;
+      if (gp.buttons[0]?.pressed && nearestIndex !== -1) openModal(nearestIndex);
+    }
+
+    // Teletransporte suave
+    if (isFlying) {
+      flyProgress += delta * 1.8;
+      const t = Math.min(flyProgress, 1.0);
+      const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      camera.position.lerpVectors(flyStartPos, flyEndPos, ease);
+
+      const diff = ((((flyEndYaw - camYaw) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      camYaw += diff * 0.12;
+
+      if (t >= 1.0) isFlying = false;
+    } else {
+      // Movimiento manual (WASD + Joystick)
+      _fwd.set(-Math.sin(camYaw), 0, -Math.cos(camYaw));
+      _side.set(Math.cos(camYaw), 0, -Math.sin(camYaw));
+
+      if (keys.q) camYaw += delta * 2.2;
+      if (keys.e) camYaw -= delta * 2.2;
+
+      _move.set(0, 0, 0);
+      if (keys.w) _move.add(_fwd);
+      if (keys.s) _move.sub(_fwd);
+      if (keys.a) _move.sub(_side);
+      if (keys.d) _move.add(_side);
+
+      if (joyInput.forward !== 0 || joyInput.strafe !== 0) {
+        _move.addScaledVector(_fwd, joyInput.forward);
+        _move.addScaledVector(_side, joyInput.strafe);
+      }
+
+      if (_move.lengthSq() > 0.001) {
+        _move.normalize();
+        const spd = (keys.shift ? 7.5 : moveSpeed);
+        velocity.x = _move.x * spd;
+        velocity.z = _move.z * spd;
+        playFootstep();
+      } else {
+        velocity.x *= 0.82;
+        velocity.z *= 0.82;
+      }
+
+      camera.position.x += velocity.x * delta;
+      camera.position.z += velocity.z * delta;
+
+      // Límites de colisión de la sala
+      const bound = R - 1.2;
+      camera.position.x = Math.max(-bound, Math.min(bound, camera.position.x));
+      camera.position.z = Math.max(-bound, Math.min(bound, camera.position.z));
+      camera.position.y = EYE_Y;
+    }
+
+    _euler.set(camPitch, camYaw, 0, 'YXZ');
+    camera.quaternion.setFromEuler(_euler);
+
+    // Detectar obra más cercana
+    let closestIdx = -1, minD = 999;
+    exhibitObjects.forEach((ex, idx) => {
+      const d = camera.position.distanceTo(new THREE.Vector3(ex.slot.viewX, EYE_Y, ex.slot.viewZ));
+      if (d < minD) { minD = d; closestIdx = idx; }
+
+      const near = d < 3.8;
+      ex.ringMesh.material.opacity = near ? 0.75 : 0.2;
+      ex.spot.intensity = near ? 38 : 18;
+    });
+
+    if (minD < 3.8) {
+      if (nearestIndex !== closestIdx) {
+        nearestIndex = closestIdx;
+        nearTitle.textContent = PROJECTS[closestIdx].t;
+        nearDot.style.background = PROJECTS[closestIdx].c;
+        nearCallout.style.display = 'flex';
+      }
+    } else {
+      nearestIndex = -1;
+      nearCallout.style.display = 'none';
+    }
+
+    drawMiniMap();
+
+    renderer.render(scene, camera);
+    cssRenderer.render(cssScene, camera);
+  }
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    cssRenderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  animate();
+</script>
+</body>
+</html>
